@@ -12,7 +12,7 @@ import java.util.UUID;
 
 @Data
 @Entity
-@Table(name = "tb_user")
+@Table(name = "tb_users")
 public class UserModel {
 
     @Id

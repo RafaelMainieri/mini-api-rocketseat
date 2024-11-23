@@ -9,8 +9,16 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/users")
 public class UserController {
 
+    private UserRepository userRepository;
+
+    public UserController(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
+
     @PostMapping
-    public void create(@RequestBody UserModel userModel) {
-        System.out.println(userModel.getName());
+    public UserModel create(@RequestBody UserModel userModel) {
+        var userCreated = this.userRepository.save(userModel);
+
+        return userCreated;
     }
 }
