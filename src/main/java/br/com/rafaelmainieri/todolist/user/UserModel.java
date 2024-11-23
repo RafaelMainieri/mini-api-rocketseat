@@ -1,9 +1,6 @@
 package br.com.rafaelmainieri.todolist.user;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 
@@ -20,6 +17,7 @@ public class UserModel {
     private UUID id;
     // id mais seguro
 
+    @Column(unique = true)
     private String username;
     private String name;
     private String password;
