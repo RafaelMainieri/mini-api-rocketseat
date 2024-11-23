@@ -1,5 +1,7 @@
 package br.com.rafaelmainieri.todolist.filter;
 
+import at.favre.lib.crypto.bcrypt.BCrypt;
+import br.com.rafaelmainieri.todolist.user.UserRepository;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -12,28 +14,51 @@ import java.util.Base64;
 @Component
 public class FilterTaskAuth extends OncePerRequestFilter {
 
+    private UserRepository userRepository;
+
+    public FilterTaskAuth(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
-        // Pegar a autenticacao (usuario e senha)
-        var authorization = request.getHeader("Authorization");
+        var servletPath = request.getServletPath();
 
-        var authEncoded = authorization.substring("Basic".length()).trim();
+        if (servletPath.equals("/tasks")) {
+            // Pegar a autenticacao (usuario e senha)
+            var authorization = request.getHeader("Authorization");
 
-        byte[] authDecode = Base64.getDecoder().decode(authEncoded);
+            var authEncoded = authorization.substring("Basic".length()).trim();
 
-        var authString = new String(authDecode);
+            byte[] authDecode = Base64.getDecoder().decode(authEncoded);
 
-        String[] credentials = authString.split(":");
-        String username = credentials[0];
-        String password = credentials[1];
+            var authString = new String(authDecode);
 
-        System.out.println("Authorization");
-        System.out.println(username);
-        System.out.println(password);
-        // Validar usuario
+            String[] credentials = authString.split(":");
+            String username = credentials[0];
+            String password = credentials[1];
 
-        // Validar senha
-        filterChain.doFilter(request, response);
+            System.out.println("Authorization");
+            System.out.println(username);
+            System.out.println(password);
+
+            // Validar usuario
+            var user = this.userRepository.findByUsername(username);
+
+            if (user == null) {
+                response.sendError(401);
+            } else {
+                // Validar senha
+                var passwordVerify = BCrypt.verifyer().verify(password.toCharArray(), user.getPassword());
+                if (passwordVerify.verified) {
+                    filterChain.doFilter(request, response);
+                } else {
+                    response.sendError(401);
+                }
+            }
+        } else {
+            filterChain.doFilter(request, response);
+        }
     }
 }
